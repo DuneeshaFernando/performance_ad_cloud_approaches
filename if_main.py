@@ -3,7 +3,7 @@ from os import listdir
 from os.path import isfile, join
 import pandas as pd
 from sklearn.ensemble import IsolationForest
-import src.evaluation as eval
+from src.evaluation import Evaluation
 from sklearn import preprocessing
 import numpy as np
 
@@ -11,6 +11,20 @@ import argparse
 import random
 import time
 import optuna
+import pymysql
+
+pymysql.install_as_MySQLdb()
+
+def combine_plotly_figs_to_html(plotly_figs, html_fname, include_plotlyjs="cdn"):
+    with open(html_fname, "w") as f:
+        f.write(plotly_figs[0].to_html(include_plotlyjs=include_plotlyjs))
+        for fig in plotly_figs[1:]:
+            f.write(fig.to_html(full_html=False, include_plotlyjs=False))
+
+def plot_optuna_default_graphs(optuna_study):
+    history_plot = optuna.visualization.plot_optimization_history(optuna_study)
+    plot_list = [history_plot]
+    return plot_list
 
 def average(lst):
     return sum(lst) / len(lst)
@@ -95,22 +109,22 @@ def main(config):
 
     # Initialise the Isolation Forest model with the best hyper-parameters and train it using the train set
     if_model = IsolationForest(n_estimators=config["n_estimators"],
-                               max_samples=config["max_samples"],
-                               max_features=config["max_features"]).fit(X_train_scaled)
+                               max_features=config["max_features"],
+                               max_samples=config["max_samples"]).fit(X_train_scaled)
 
     X_test_scaled['y_pred'] = if_model.score_samples(X_test_scaled)
     threshold = np.percentile(X_test_scaled['y_pred'], [9.13])[0]
     X_test_scaled['is_anomaly'] = X_test_scaled['y_pred'] < threshold
-    test_eval = eval.evaluation(y_test,X_test_scaled['is_anomaly'])
+    test_eval = Evaluation(y_test,X_test_scaled['is_anomaly'])
     test_eval.print()
 
-    return test_eval.AUC
+    return test_eval.auc
 
 def objective(trial):
     params = dict()
     params["n_estimators"] = trial.suggest_int("n_estimators", 20, 500)
-    params["max_samples"] = trial.suggest_float("max_samples", 0.05, 1.001, 0.05)
-    params["max_features"] = trial.suggest_float("max_features", 0.1, 1.1, 0.1)
+    params["max_features"] = trial.suggest_float("max_features", 0.1, 1.0, step=0.1)
+    params["max_samples"] = trial.suggest_float("max_samples", 0.05, 1.0, step=0.05)
     params["k"] = trial.suggest_int("k", 20, 500)
 
     print(f"Initiating Run {trial.number} with params : {trial.params}")
@@ -123,7 +137,7 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--optuna-db", type=str, help="Path to the Optuna Database file",
                         default="sqlite:///optuna.db")
     parser.add_argument("-n", "--optuna-study-name", type=str, help="Name of the optuna study",
-                        default="duneesha_isolation_forest")
+                        default="duneesha_isolation_forest_run_1")
     args = parser.parse_args()
 
     # wait for some time to avoid overlapping run ids when running parallel
@@ -137,3 +151,11 @@ if __name__ == "__main__":
                                 load_if_exists=True,
                                 )
     study.optimize(objective, n_trials=300)
+
+    # print best study
+    best_trial = study.best_trial
+    print(best_trial.params)
+
+    plots = plot_optuna_default_graphs(study)
+
+    combine_plotly_figs_to_html(plotly_figs=plots, html_fname="optimization_trial_plots/iforest_hpo.html")
