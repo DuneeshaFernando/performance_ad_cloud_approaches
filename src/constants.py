@@ -1,0 +1,3 @@
+# Paths
+PROPRIETARY_DATASET_LOCATION = "data/"
+MODEL_LOCATION = "models/"
