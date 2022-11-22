@@ -132,3 +132,4 @@ dmypy.json
 .idea/
 optuna.db
 optimization_trial_plots
+models
