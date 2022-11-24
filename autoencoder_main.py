@@ -85,7 +85,7 @@ def main(config, trial_number="best"):
     # Initialise the AutoEncoder model
     autoencoder_model = autoencoder.AutoEncoder(in_size=w_size, latent_size=z_size, num_layers=config["NUM_LAYERS"])
     # Start training
-    history = autoencoder.training(conf.N_EPOCHS, autoencoder_model, train_loader)
+    history = autoencoder.training(conf.N_EPOCHS, autoencoder_model, train_loader, config["LEARNING_RATE"])
 
     # Save the model and load the model
     model_path = const.MODEL_LOCATION
@@ -125,6 +125,7 @@ def objective(trial):
     hidden_size_limit = int((params["WINDOW_SIZE"]*conf.n_features)/(2**(params["NUM_LAYERS"]-1)))
     params["HIDDEN_SIZE"] = trial.suggest_int("HIDDEN_SIZE", 1, max(2,hidden_size_limit))
     params["BATCH_SIZE"] = trial.suggest_int("BATCH_SIZE", 20, 1000)
+    params["LEARNING_RATE"] = trial.suggest_float("LEARNING_RATE", 1e-5, 1e-1, log=True)
 
     print(f"Initiating Run {trial.number} with params : {trial.params}")
 
@@ -136,7 +137,7 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--optuna-db", type=str, help="Path to the Optuna Database file",
                         default="sqlite:///optuna.db")
     parser.add_argument("-n", "--optuna-study-name", type=str, help="Name of the optuna study",
-                        default="duneesha_autoencoder_run_7")
+                        default="duneesha_autoencoder_run_8")
     args = parser.parse_args()
 
     # wait for some time to avoid overlapping run ids when running parallel
@@ -149,7 +150,7 @@ if __name__ == "__main__":
                                 storage=args.optuna_db,
                                 load_if_exists=True,
                                 )
-    study.optimize(objective, n_trials=50)
+    study.optimize(objective, n_trials=100)
 
     # print best study
     best_trial = study.best_trial
@@ -158,3 +159,7 @@ if __name__ == "__main__":
     plots = plot_optuna_default_graphs(study)
 
     combine_plotly_figs_to_html(plotly_figs=plots, html_fname="optimization_trial_plots/autoencoder_hpo.html")
+
+# Best trials
+# Run 17 with params : {'WINDOW_SIZE': 7, 'NUM_LAYERS': 5, 'HIDDEN_SIZE': 1, 'BATCH_SIZE': 59, 'LEARNING_RATE': 5.729089814295318e-05}
+# Run 51 with params : {'WINDOW_SIZE': 6, 'NUM_LAYERS': 4, 'HIDDEN_SIZE': 2, 'BATCH_SIZE': 265, 'LEARNING_RATE': 1.1522142669867557e-05}

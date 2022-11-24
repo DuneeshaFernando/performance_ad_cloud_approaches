@@ -38,10 +38,10 @@ class AutoEncoder(nn.Module):
         reconstructed_window = self.decoder(latent_window)
         return reconstructed_window
 
-def training(epochs, autoencoder_model, train_loader):
+def training(epochs, autoencoder_model, train_loader, learning_rate):
     history = []
     criterion = nn.MSELoss()
-    optimizer = torch.optim.Adam(autoencoder_model.parameters(), lr=1e-3, weight_decay=1e-5)
+    optimizer = torch.optim.Adam(autoencoder_model.parameters(), lr=learning_rate, weight_decay=1e-5)
     for epoch in range(epochs):
         for [batch] in train_loader:
             batch = utils.to_device(batch, device)
