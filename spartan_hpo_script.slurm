@@ -1,13 +1,11 @@
 #!/bin/bash
-#SBATCH --job-name=isolationForestHpo
+#SBATCH --job-name=isolationForestHpoArray
 #SBATCH --ntasks=1
-#SBATCH -t 0:05:00
-# Specify your email address to be notified of progress.
-# SBATCH --mail-user=youremailaddress@unimelb.edu.au
-# SBATCH --mail-type=ALL
+#SBATCH -t 0:15:00
+#SBATCH --array=1-300%3
 
 # Set the remote port and server
-REMOTEHOST=34.168.75.39
+REMOTEHOST=34.82.211.43
 REMOTEPORT=3306
 
 # load modules and activate env
