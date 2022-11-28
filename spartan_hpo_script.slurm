@@ -22,24 +22,6 @@ OPTUNA_DB=mysql://optuna:Optuna#1234@REMOTEHOST:REMOTEPORT/DuneeshaDB
 # Launch your script, giving it as arguments the database file and the study name
 python if_main.py --optuna-db $OPTUNA_DB --optuna-study-name $OPTUNA_STUDY_NAME
 
-
-
-
-
-
-
-
-
-
-
-
-# Load the environment variables for R
-
-module load python/3.8.6
-
-# The command to actually run the job
-python postman_echo.py
-
 ##DO NOT ADD/EDIT BEYOND THIS LINE##
 ##Job monitor command to list the resource usage
 my-job-stats -a -n -s
