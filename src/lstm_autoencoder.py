@@ -5,65 +5,78 @@ import src.trainer_utils as utils
 device = utils.get_default_device()
 
 class Encoder(nn.Module):
-    def __init__(self, seq_len, n_features, embedding_dim=64):
+    def __init__(self, seq_len, n_features, embedding_dim=64, num_layers=2, num_neurons=[]):
         super(Encoder, self).__init__()
 
         self.seq_len, self.n_features = seq_len, n_features
-        self.embedding_dim, self.hidden_dim = embedding_dim, 2 * embedding_dim
+        self.embedding_dim = embedding_dim
 
-        self.rnn1 = nn.LSTM(
-            input_size=n_features,
-            hidden_size=self.hidden_dim,
-            num_layers=1,
-            batch_first=True
-        )
-
-        self.rnn2 = nn.LSTM(
-            input_size=self.hidden_dim,
-            hidden_size=embedding_dim,
-            num_layers=1,
-            batch_first=True
-        )
+        self.encoder_layers = nn.ModuleList()
+        for layer_n in range(num_layers, 0, -1):
+            h_layer = nn.LSTM(
+                input_size=num_neurons[layer_n],
+                hidden_size=num_neurons[layer_n - 1],
+                num_layers=1,
+                batch_first=True
+            )
+            self.encoder_layers.append(h_layer)
 
     def forward(self, x):
-        x, _ = self.rnn1(x)
-        x, (hidden_n, _) = self.rnn2(x)
-        return hidden_n.reshape((-1, 1, self.embedding_dim))
+        for encoder_layer in self.encoder_layers[:-1]:
+            x, _ = encoder_layer(x)
+        x, (hidden_n, _) = self.encoder_layers[-1](x)
+        temp = hidden_n.reshape((-1, 1, self.embedding_dim))
+        return temp
 
 
 class Decoder(nn.Module):
-    def __init__(self, seq_len, embedding_dim=64, n_features=1):
+    def __init__(self, seq_len, embedding_dim=64, n_features=1, num_layers=2, num_neurons=[]):
         super(Decoder, self).__init__()
         self.seq_len, self.embedding_dim = seq_len, embedding_dim
-        self.hidden_dim, self.n_features = 2 * embedding_dim, n_features
+        self.n_features = n_features
 
-        self.rnn1 = nn.LSTM(
-            input_size=embedding_dim,
-            hidden_size=embedding_dim,
-            num_layers=1,
-            batch_first=True
-        )
+        self.decoder_layers = nn.ModuleList()
+        for layer_n in range(num_layers):
+            if layer_n == 0:
+                h_layer = nn.LSTM(
+                        input_size=num_neurons[layer_n],
+                        hidden_size=num_neurons[layer_n],
+                        num_layers=1,
+                        batch_first=True
+                )
+            else:
+                h_layer = nn.LSTM(
+                    input_size=num_neurons[layer_n - 1],
+                    hidden_size=num_neurons[layer_n],
+                    num_layers=1,
+                    batch_first=True
+                )
+            self.decoder_layers.append(h_layer)
 
-        self.rnn2 = nn.LSTM(
-            input_size=embedding_dim,
-            hidden_size=self.hidden_dim,
-            num_layers=1,
-            batch_first=True
-        )
-        self.output_layer = nn.Linear(self.hidden_dim, n_features)
+        self.decoder_layers.append(nn.Linear(num_neurons[num_layers - 1], num_neurons[num_layers]))
 
     def forward(self, x):
         x = x.repeat((1, self.seq_len, 1))
-        x, _ = self.rnn1(x)
-        x, _ = self.rnn2(x)
-        return self.output_layer(x)
+        for decoder_layer in self.decoder_layers[:-1]:
+            x, _ = decoder_layer(x)
+        x = self.decoder_layers[-1](x)
+        return x
 
 
 class LstmAutoencoder(nn.Module):
-    def __init__(self, seq_len, n_features, embedding_dim=64):
+    def __init__(self, seq_len, n_features, embedding_dim=64, num_layers=2):
         super(LstmAutoencoder, self).__init__()
-        self.encoder = Encoder(seq_len, n_features, embedding_dim).to(device)
-        self.decoder = Decoder(seq_len, embedding_dim, n_features).to(device)
+
+        num_neurons = []
+        num_neurons.append(embedding_dim)
+        hidden_dim = embedding_dim
+        for l in range(num_layers - 1):
+            hidden_dim = int(hidden_dim * 2)
+            num_neurons.append(hidden_dim)
+        num_neurons.append(n_features)
+
+        self.encoder = Encoder(seq_len, n_features, embedding_dim, num_layers, num_neurons).to(device)
+        self.decoder = Decoder(seq_len, embedding_dim, n_features, num_layers, num_neurons).to(device)
 
     def forward(self, x):
         x = self.encoder(x)
@@ -71,10 +84,10 @@ class LstmAutoencoder(nn.Module):
         return x
 
 
-def training(epochs, lstm_autoencoder_model, train_loader):
+def training(epochs, lstm_autoencoder_model, train_loader, learning_rate):
     history = []
     criterion = nn.MSELoss()
-    optimizer = torch.optim.Adam(lstm_autoencoder_model.parameters(), lr=1e-3, weight_decay=1e-5)
+    optimizer = torch.optim.Adam(lstm_autoencoder_model.parameters(), lr=learning_rate, weight_decay=1e-5)
     for epoch in range(epochs):
         for [batch] in train_loader:
             batch = utils.to_device(batch, device)
@@ -84,7 +97,7 @@ def training(epochs, lstm_autoencoder_model, train_loader):
             loss.backward()
             optimizer.step()
 
-        # print(f'Epoch:{epoch + 1}, Loss: {loss.item():.4f}')
+        print(f'Epoch:{epoch + 1}, Loss: {loss.item():.4f}')
         history.append((epoch, batch, recon))
     return history
 

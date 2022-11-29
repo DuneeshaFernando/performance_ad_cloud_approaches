@@ -68,21 +68,21 @@ def main(config, trial_number="best"):
     anomaly_df_scaled = pd.DataFrame(anomaly_df_values_scaled) # shape = (3635, 9)
 
     # Preparing the datasets for training and testing using AutoEncoder
-    windows_normal = normal_df_scaled.values[np.arange(config("WINDOW_SIZE"))[None, :] + np.arange(normal_df_scaled.shape[0] - config("WINDOW_SIZE"))[:, None]] # shape = (9647, 5, 9)
-    windows_anomaly = anomaly_df_scaled.values[np.arange(config("WINDOW_SIZE"))[None, :] + np.arange(anomaly_df_scaled.shape[0] - config("WINDOW_SIZE"))[:, None]] # shape = (3630, 5, 9)
+    windows_normal = normal_df_scaled.values[np.arange(config["WINDOW_SIZE"])[None, :] + np.arange(normal_df_scaled.shape[0] - config["WINDOW_SIZE"])[:, None]] # shape = (9647, 5, 9)
+    windows_anomaly = anomaly_df_scaled.values[np.arange(config["WINDOW_SIZE"])[None, :] + np.arange(anomaly_df_scaled.shape[0] - config["WINDOW_SIZE"])[:, None]] # shape = (3630, 5, 9)
 
     # Create batches of training and testing data
     train_loader = torch.utils.data.DataLoader(data_utils.TensorDataset(
         torch.from_numpy(windows_normal).float()
-    ), batch_size=config("BATCH_SIZE"), shuffle=False, num_workers=0)
+    ), batch_size=config["BATCH_SIZE"], shuffle=False, num_workers=0)
     test_loader = torch.utils.data.DataLoader(data_utils.TensorDataset(
         torch.from_numpy(windows_anomaly).float()
-    ), batch_size=config("BATCH_SIZE"), shuffle=False, num_workers=0)
+    ), batch_size=config["BATCH_SIZE"], shuffle=False, num_workers=0)
 
     # Initialise the LSTMAutoEncoder model
-    lstm_autoencoder_model = lstm_autoencoder.LstmAutoencoder(seq_len=config("WINDOW_SIZE"), n_features=windows_normal.shape[2], num_layers=config["NUM_LAYERS"])
+    lstm_autoencoder_model = lstm_autoencoder.LstmAutoencoder(seq_len=config["WINDOW_SIZE"], n_features=windows_normal.shape[2], num_layers=config["NUM_LAYERS"])
     # Start training
-    history = lstm_autoencoder.training(conf.N_EPOCHS, lstm_autoencoder_model, train_loader)
+    history = lstm_autoencoder.training(conf.N_EPOCHS, lstm_autoencoder_model, train_loader, config["LEARNING_RATE"])
 
     # Save the model and load the model
     model_path = const.MODEL_LOCATION
@@ -118,8 +118,9 @@ def main(config, trial_number="best"):
 def objective(trial):
     params = dict()
     params["WINDOW_SIZE"] = trial.suggest_int("WINDOW_SIZE", 6, 100)
-    params["NUM_LAYERS"] = trial.suggest_int("NUM_LAYERS", 2, 10)
+    params["NUM_LAYERS"] = trial.suggest_int("NUM_LAYERS", 2, 4)
     params["BATCH_SIZE"] = trial.suggest_int("BATCH_SIZE", 20, 1000)
+    params["LEARNING_RATE"] = trial.suggest_float("LEARNING_RATE", 1e-5, 1e-1, log=True)
 
     print(f"Initiating Run {trial.number} with params : {trial.params}")
 
@@ -144,7 +145,7 @@ if __name__ == "__main__":
                                 storage=args.optuna_db,
                                 load_if_exists=True,
                                 )
-    study.optimize(objective, n_trials=50)
+    study.optimize(objective, n_trials=1) # When running locally, set n_trials as the no.of trials required
 
     # print best study
     best_trial = study.best_trial
