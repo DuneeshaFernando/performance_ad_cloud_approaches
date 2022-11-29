@@ -133,3 +133,4 @@ dmypy.json
 optuna.db
 optimization_trial_plots
 models
+.DS_Store

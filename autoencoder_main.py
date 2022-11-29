@@ -137,7 +137,7 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--optuna-db", type=str, help="Path to the Optuna Database file",
                         default="sqlite:///optuna.db")
     parser.add_argument("-n", "--optuna-study-name", type=str, help="Name of the optuna study",
-                        default="duneesha_autoencoder_run_8")
+                        default="duneesha_autoencoder_run_1")
     args = parser.parse_args()
 
     # wait for some time to avoid overlapping run ids when running parallel
@@ -150,7 +150,7 @@ if __name__ == "__main__":
                                 storage=args.optuna_db,
                                 load_if_exists=True,
                                 )
-    study.optimize(objective, n_trials=100)
+    study.optimize(objective, n_trials=1)  # When running locally, set n_trials as the no.of trial required
 
     # print best study
     best_trial = study.best_trial
