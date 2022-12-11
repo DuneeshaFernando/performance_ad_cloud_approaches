@@ -131,6 +131,6 @@ dmypy.json
 # Extension of .gitignore
 .idea/
 optuna.db
-optimization_trial_plots
-models
+optimization_trial_plots/*
+models/*
 .DS_Store
