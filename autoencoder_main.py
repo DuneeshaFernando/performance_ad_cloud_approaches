@@ -85,7 +85,7 @@ def main(config, trial_number="best"):
     # Initialise the AutoEncoder model
     autoencoder_model = autoencoder.AutoEncoder(in_size=w_size, latent_size=z_size, num_layers=config["NUM_LAYERS"])
     # Start training
-    history = autoencoder.training(conf.N_EPOCHS, autoencoder_model, train_loader, config["LEARNING_RATE"])
+    autoencoder.training(conf.N_EPOCHS, autoencoder_model, train_loader, config["LEARNING_RATE"])
 
     # Save the model and load the model
     model_path = const.MODEL_LOCATION

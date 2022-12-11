@@ -39,7 +39,6 @@ class AutoEncoder(nn.Module):
         return reconstructed_window
 
 def training(epochs, autoencoder_model, train_loader, learning_rate):
-    history = []
     criterion = nn.MSELoss()
     optimizer = torch.optim.Adam(autoencoder_model.parameters(), lr=learning_rate, weight_decay=1e-5)
     for epoch in range(epochs):
@@ -52,8 +51,7 @@ def training(epochs, autoencoder_model, train_loader, learning_rate):
             optimizer.step()
 
         # print(f'Epoch:{epoch + 1}, Loss: {loss.item():.4f}')
-        history.append((epoch, batch, recon))
-    return history
+
 
 def testing(autoencoder_model, test_loader):
     results = []

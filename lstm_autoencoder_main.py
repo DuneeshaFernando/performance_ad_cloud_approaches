@@ -82,7 +82,7 @@ def main(config, trial_number="best"):
     # Initialise the LSTMAutoEncoder model
     lstm_autoencoder_model = lstm_autoencoder.LstmAutoencoder(seq_len=config["WINDOW_SIZE"], n_features=windows_normal.shape[2], num_layers=config["NUM_LAYERS"])
     # Start training
-    history = lstm_autoencoder.training(conf.N_EPOCHS, lstm_autoencoder_model, train_loader, config["LEARNING_RATE"])
+    lstm_autoencoder.training(conf.N_EPOCHS, lstm_autoencoder_model, train_loader, config["LEARNING_RATE"])
 
     # Save the model and load the model
     model_path = const.MODEL_LOCATION
@@ -132,7 +132,7 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--optuna-db", type=str, help="Path to the Optuna Database file",
                         default="sqlite:///optuna.db")
     parser.add_argument("-n", "--optuna-study-name", type=str, help="Name of the optuna study",
-                        default="duneesha_lstm_autoencoder_run_1")
+                        default="duneesha_lstm_autoencoder_run_2")
     args = parser.parse_args()
 
     # wait for some time to avoid overlapping run ids when running parallel
@@ -145,7 +145,7 @@ if __name__ == "__main__":
                                 storage=args.optuna_db,
                                 load_if_exists=True,
                                 )
-    study.optimize(objective, n_trials=1) # When running locally, set n_trials as the no.of trials required
+    study.optimize(objective, n_trials=100) # When running locally, set n_trials as the no.of trials required
 
     # print best study
     best_trial = study.best_trial

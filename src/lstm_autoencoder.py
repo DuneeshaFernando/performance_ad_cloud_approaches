@@ -85,7 +85,6 @@ class LstmAutoencoder(nn.Module):
 
 
 def training(epochs, lstm_autoencoder_model, train_loader, learning_rate):
-    history = []
     criterion = nn.MSELoss()
     optimizer = torch.optim.Adam(lstm_autoencoder_model.parameters(), lr=learning_rate, weight_decay=1e-5)
     for epoch in range(epochs):
@@ -98,8 +97,6 @@ def training(epochs, lstm_autoencoder_model, train_loader, learning_rate):
             optimizer.step()
 
         print(f'Epoch:{epoch + 1}, Loss: {loss.item():.4f}')
-        history.append((epoch, batch, recon))
-    return history
 
 
 def testing(lstm_autoencoder_model, test_loader):
