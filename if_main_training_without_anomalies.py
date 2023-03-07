@@ -60,9 +60,7 @@ def main(config):
     # Next, drop the datetime column
     normal_df_list_without_datetime = [normal_df.drop(columns=['datetime']) for normal_df in normal_df_list]
     # Finally merge those dataframes
-    normal_df = pd.concat(normal_df_list_without_datetime) # shape = (9652, 9)
-    # Add a new column called is_anomaly with the value 0 to the normal_df
-    normal_df['is_anomaly'] = 0
+    X_train = pd.concat(normal_df_list_without_datetime) # shape = (9652, 9)
 
     # Read anomaly data
     anomaly_path = join(dataset_path, 'anomaly_data/')
@@ -72,28 +70,9 @@ def main(config):
     # Next, drop the datetime column
     anomaly_df_list_without_datetime = [anomaly_df.drop(columns=['datetime']) for anomaly_df in anomaly_df_list]
     # Finally merge those dataframes
-    anomaly_df = pd.concat(anomaly_df_list_without_datetime) # shape = (3635, 10) with the is_anomaly column
-
-    # Create the train set and test set from the anomaly_df and normal_df
-    # Split the anomaly_df into 2 parts
-    anomaly_df_split_point  = int(anomaly_df.shape[0] / 2)
-    anomaly_df_part_1 = anomaly_df.iloc[:anomaly_df_split_point, :]
-    anomaly_df_part_2 = anomaly_df.iloc[anomaly_df_split_point:, :]
-
-    # Split the normal_df also such that anomaly_df_part_1 could replace a part of normal_df
-    normal_df_split_point = normal_df.shape[0]-anomaly_df_split_point
-    normal_df_part_1 = normal_df.iloc[:normal_df_split_point, :]
-    normal_df_part_2 = normal_df.iloc[normal_df_split_point:, :]
-
-    # Merge the split dataframes to form the train set and test set accordingly
-    train_frames = [normal_df_part_1, anomaly_df_part_1]
-    test_frames = [normal_df_part_2, anomaly_df_part_2]
-    X_train = pd.concat(train_frames)
-    X_test = pd.concat(test_frames)
+    X_test = pd.concat(anomaly_df_list_without_datetime) # shape = (3635, 10) with the is_anomaly column
 
     # Separate out the is_anomaly labels before normalisation/standardization
-    y_train = X_train['is_anomaly']
-    X_train = X_train.drop(['is_anomaly'], axis=1)
     y_test = X_test['is_anomaly']
     X_test = X_test.drop(['is_anomaly'], axis=1)
 

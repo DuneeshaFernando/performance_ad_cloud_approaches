@@ -1,11 +1,13 @@
 #!/bin/bash
 #SBATCH --job-name=isolationForestHpoArray
-#SBATCH --ntasks=1
 #SBATCH -t 0:15:00
 #SBATCH --array=1-300%3
+#SBATCH --gres=gpu:1
+#SBATCH -p gpu-a100
+#SBATCH --mem=8G
 
 # Set the remote port and server
-REMOTEHOST=34.82.211.43
+REMOTEHOST=34.105.9.156
 REMOTEPORT=3306
 
 # load modules and activate env
