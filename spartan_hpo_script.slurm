@@ -3,7 +3,8 @@
 #SBATCH -t 0:15:00
 #SBATCH --array=1-300%3
 #SBATCH --gres=gpu:1
-#SBATCH -p gpu-a100
+#SBATCH --partition=deeplearn
+#SBATCH --qos=gpgpudeeplearn
 #SBATCH --mem=8G
 
 # Set the remote port and server
