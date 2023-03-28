@@ -145,7 +145,7 @@ if __name__ == "__main__":
                                 storage=args.optuna_db,
                                 load_if_exists=True,
                                 )
-    study.optimize(objective, n_trials=100) # When running locally, set n_trials as the no.of trials required
+    study.optimize(objective, n_trials=1) # When running locally, set n_trials as the no.of trials required
 
     # print best study
     best_trial = study.best_trial
