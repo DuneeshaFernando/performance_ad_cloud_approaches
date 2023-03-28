@@ -115,7 +115,8 @@ def main(config):
                                max_samples=config["max_samples"]).fit(X_train_scaled)
 
     X_test_scaled['y_pred'] = if_model.score_samples(X_test_scaled)
-    threshold = np.percentile(X_test_scaled['y_pred'], [9.13])[0]
+    thresholding_percentile = ((y_test.tolist().count(1.0)) / (len(y_test))) * 100
+    threshold = np.percentile(X_test_scaled['y_pred'], [thresholding_percentile])[0]
     X_test_scaled['is_anomaly'] = X_test_scaled['y_pred'] < threshold
     test_eval = Evaluation(y_test,X_test_scaled['is_anomaly'])
     test_eval.print()

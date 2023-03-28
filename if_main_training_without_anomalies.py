@@ -94,7 +94,8 @@ def main(config):
                                max_samples=config["max_samples"]).fit(X_train_scaled)
 
     X_test_scaled['y_pred'] = if_model.score_samples(X_test_scaled)
-    threshold = np.percentile(X_test_scaled['y_pred'], [9.13])[0]
+    thresholding_percentile = ((y_test.count(1.0)) / (len(y_test))) * 100
+    threshold = np.percentile(X_test_scaled['y_pred'], [thresholding_percentile])[0]
     X_test_scaled['is_anomaly'] = X_test_scaled['y_pred'] < threshold
     test_eval = Evaluation(y_test,X_test_scaled['is_anomaly'])
     test_eval.print()
@@ -118,7 +119,7 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--optuna-db", type=str, help="Path to the Optuna Database file",
                         default="sqlite:///optuna.db")
     parser.add_argument("-n", "--optuna-study-name", type=str, help="Name of the optuna study",
-                        default="duneesha_isolation_forest_run_1")
+                        default="duneesha_isolation_forest_wo_anomalies_run_1")
     args = parser.parse_args()
 
     # wait for some time to avoid overlapping run ids when running parallel
